@@ -4,6 +4,7 @@ const authService = require("./auth.service");
 const {
   validateRegister,
   validateLogin,
+  validateGoogleLogin,
 } = require("./auth.validation");
 
 async function register(req, res, next) {
@@ -43,6 +44,22 @@ async function login(req, res, next) {
   }
 }
 
+async function googleLogin(req, res, next) {
+  try {
+    const validation = validateGoogleLogin(req.body);
+
+    if (!validation.isValid) {
+      throw new AppError(validation.errors[0], 400);
+    }
+
+    const result = await authService.loginWithGoogle(validation.value.idToken);
+
+    return successResponse(res, "Google login successful.", result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function logout(req, res, next) {
   try {
     await authService.logoutPublicUser();
@@ -56,5 +73,6 @@ async function logout(req, res, next) {
 module.exports = {
   register,
   login,
+  googleLogin,
   logout,
 };

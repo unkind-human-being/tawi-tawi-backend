@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const env = {
-  PORT: process.env.PORT || 5000,
+  PORT: process.env.PORT || 1738,
   NODE_ENV: process.env.NODE_ENV || "development",
 
   NEO4J_URI: process.env.NEO4J_URI,
@@ -12,6 +12,8 @@ const env = {
 
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
+
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
 
   CORS_ORIGIN: process.env.CORS_ORIGIN || "*",
 };

@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
 
 const env = require("./config/env");
 const v1Routes = require("./routes/v1");
+const swaggerDocument = require("./docs/swagger");
 const notFoundMiddleware = require("./middleware/notFound.middleware");
 const errorMiddleware = require("./middleware/error.middleware");
 
@@ -24,8 +26,22 @@ app.get("/", (req, res) => {
     message: "Tawi-Tawi Backend API is running.",
     apiVersion: "v1",
     healthCheck: "/v1/health",
+    docs: "/api-docs",
+    swaggerJson: "/swagger.json",
   });
 });
+
+app.get("/swagger.json", (req, res) => {
+  res.json(swaggerDocument);
+});
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customSiteTitle: "Tawi-Tawi API Docs",
+  })
+);
 
 app.use("/v1", v1Routes);
 

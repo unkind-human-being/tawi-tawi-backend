@@ -56,7 +56,26 @@ function validateLogin(body) {
   };
 }
 
+function validateGoogleLogin(body) {
+  const errors = [];
+
+  const idToken = body.idToken ? String(body.idToken).trim() : "";
+
+  if (!idToken) {
+    errors.push("Google ID token is required.");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    value: {
+      idToken,
+    },
+  };
+}
+
 module.exports = {
   validateRegister,
   validateLogin,
+  validateGoogleLogin,
 };

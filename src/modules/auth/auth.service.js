@@ -10,7 +10,13 @@ const {
   findUserByEmail,
 } = require("../users/user.repository");
 
+const {
+  findUserByAuthIdentity,
+  createAuthIdentityForUser,
+} = require("../users/authIdentity.repository");
+
 const { serializeUser } = require("../users/user.serializer");
+const { verifyGoogleIdToken } = require("./providers/google.provider");
 
 async function registerPublicUser(registerData) {
   const existingUser = await findUserByEmail(registerData.email);
@@ -58,6 +64,10 @@ async function loginPublicUser(loginData) {
     throw new AppError("Your account is disabled.", 403);
   }
 
+  if (!user.passwordHash) {
+    throw new AppError("Please login using your connected auth provider.", 401);
+  }
+
   const isPasswordCorrect = await comparePassword(
     loginData.password,
     user.passwordHash
@@ -77,6 +87,54 @@ async function loginPublicUser(loginData) {
   };
 }
 
+async function loginWithGoogle(idToken) {
+  const googleUser = await verifyGoogleIdToken(idToken);
+
+  let userNode = await findUserByAuthIdentity(
+    googleUser.provider,
+    googleUser.providerUserId
+  );
+
+  if (!userNode) {
+    const existingUserByEmail = await findUserByEmail(googleUser.email);
+
+    if (existingUserByEmail) {
+      userNode = await createAuthIdentityForUser(
+        existingUserByEmail.properties.id,
+        googleUser
+      );
+    } else {
+      const now = new Date().toISOString();
+
+      const newUserNode = await createUser({
+        id: randomUUID(),
+        fullName: googleUser.fullName,
+        email: googleUser.email,
+        passwordHash: null,
+        status: USER_STATUS.ACTIVE,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      userNode = await createAuthIdentityForUser(
+        newUserNode.properties.id,
+        googleUser
+      );
+    }
+  }
+
+  const user = serializeUser(userNode);
+
+  const token = generateToken({
+    userId: user.id,
+  });
+
+  return {
+    token,
+    user,
+  };
+}
+
 async function logoutPublicUser() {
   return true;
 }
@@ -84,5 +142,6 @@ async function logoutPublicUser() {
 module.exports = {
   registerPublicUser,
   loginPublicUser,
+  loginWithGoogle,
   logoutPublicUser,
 };

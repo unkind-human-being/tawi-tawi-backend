@@ -11,11 +11,15 @@ async function createUser(userData) {
           id: $id,
           fullName: $fullName,
           email: $email,
-          passwordHash: $passwordHash,
           status: $status,
           createdAt: $createdAt,
           updatedAt: $updatedAt
         })
+
+        FOREACH (_ IN CASE WHEN $passwordHash IS NULL THEN [] ELSE [1] END |
+          SET u.passwordHash = $passwordHash
+        )
+
         RETURN u
         `,
         userData

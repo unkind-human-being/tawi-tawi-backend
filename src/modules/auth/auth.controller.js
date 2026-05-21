@@ -1,10 +1,12 @@
 const AppError = require("../../utils/AppError");
 const { successResponse } = require("../../utils/response");
 const authService = require("./auth.service");
+
 const {
   validateRegister,
   validateLogin,
   validateGoogleLogin,
+  validateMetaLogin,
 } = require("./auth.validation");
 
 async function register(req, res, next) {
@@ -60,6 +62,24 @@ async function googleLogin(req, res, next) {
   }
 }
 
+async function metaLogin(req, res, next) {
+  try {
+    const validation = validateMetaLogin(req.body);
+
+    if (!validation.isValid) {
+      throw new AppError(validation.errors[0], 400);
+    }
+
+    const result = await authService.loginWithMeta(
+      validation.value.accessToken
+    );
+
+    return successResponse(res, "Meta login successful.", result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function logout(req, res, next) {
   try {
     await authService.logoutPublicUser();
@@ -74,5 +94,6 @@ module.exports = {
   register,
   login,
   googleLogin,
+  metaLogin,
   logout,
 };

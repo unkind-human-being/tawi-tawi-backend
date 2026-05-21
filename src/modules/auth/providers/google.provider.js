@@ -6,7 +6,10 @@ const AppError = require("../../../utils/AppError");
 let googleClient = null;
 
 function getGoogleClient() {
-  if (!env.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID === "your_google_client_id_here") {
+  if (
+    !env.GOOGLE_CLIENT_ID ||
+    env.GOOGLE_CLIENT_ID === "your_google_client_id_here"
+  ) {
     throw new AppError("Google Client ID is not configured.", 500);
   }
 
@@ -29,6 +32,10 @@ async function verifyGoogleIdToken(idToken) {
 
   if (!payload) {
     throw new AppError("Invalid Google token.", 401);
+  }
+
+  if (!payload.sub) {
+    throw new AppError("Google account ID is missing.", 401);
   }
 
   if (!payload.email) {

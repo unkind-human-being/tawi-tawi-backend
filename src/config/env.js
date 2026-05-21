@@ -15,6 +15,9 @@ const env = {
 
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
 
+  META_APP_ID: process.env.META_APP_ID,
+  META_APP_SECRET: process.env.META_APP_SECRET,
+
   CORS_ORIGIN: process.env.CORS_ORIGIN || "*",
 };
 

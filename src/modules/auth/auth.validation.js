@@ -74,8 +74,27 @@ function validateGoogleLogin(body) {
   };
 }
 
+function validateMetaLogin(body) {
+  const errors = [];
+
+  const accessToken = body.accessToken ? String(body.accessToken).trim() : "";
+
+  if (!accessToken) {
+    errors.push("Meta access token is required.");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    value: {
+      accessToken,
+    },
+  };
+}
+
 module.exports = {
   validateRegister,
   validateLogin,
   validateGoogleLogin,
+  validateMetaLogin,
 };

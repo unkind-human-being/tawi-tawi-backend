@@ -11,7 +11,7 @@ async function findUserByAuthIdentity(provider, providerUserId) {
           provider: $provider,
           providerUserId: $providerUserId
         })
-        RETURN u, a
+        RETURN u
         LIMIT 1
         `,
         {
@@ -37,19 +37,24 @@ async function createAuthIdentityForUser(userId, identityData) {
       tx.run(
         `
         MATCH (u:User { id: $userId })
+
         MERGE (a:AuthIdentity {
           provider: $provider,
           providerUserId: $providerUserId
         })
+
         ON CREATE SET
           a.email = $email,
           a.fullName = $fullName,
           a.picture = $picture,
           a.createdAt = $createdAt
+
         SET
           a.updatedAt = $updatedAt
+
         MERGE (u)-[:HAS_AUTH_IDENTITY]->(a)
-        RETURN u, a
+
+        RETURN u
         `,
         {
           userId,

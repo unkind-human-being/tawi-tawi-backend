@@ -17,6 +17,7 @@ const {
 
 const { serializeUser } = require("../users/user.serializer");
 const { verifyGoogleIdToken } = require("./providers/google.provider");
+const { verifyMetaAccessToken } = require("./providers/meta.provider");
 
 async function registerPublicUser(registerData) {
   const existingUser = await findUserByEmail(registerData.email);
@@ -26,7 +27,6 @@ async function registerPublicUser(registerData) {
   }
 
   const now = new Date().toISOString();
-
   const passwordHash = await hashPassword(registerData.password);
 
   const userNode = await createUser({
@@ -87,29 +87,27 @@ async function loginPublicUser(loginData) {
   };
 }
 
-async function loginWithGoogle(idToken) {
-  const googleUser = await verifyGoogleIdToken(idToken);
-
+async function loginWithProvider(providerUser) {
   let userNode = await findUserByAuthIdentity(
-    googleUser.provider,
-    googleUser.providerUserId
+    providerUser.provider,
+    providerUser.providerUserId
   );
 
   if (!userNode) {
-    const existingUserByEmail = await findUserByEmail(googleUser.email);
+    const existingUserByEmail = await findUserByEmail(providerUser.email);
 
     if (existingUserByEmail) {
       userNode = await createAuthIdentityForUser(
         existingUserByEmail.properties.id,
-        googleUser
+        providerUser
       );
     } else {
       const now = new Date().toISOString();
 
       const newUserNode = await createUser({
         id: randomUUID(),
-        fullName: googleUser.fullName,
-        email: googleUser.email,
+        fullName: providerUser.fullName,
+        email: providerUser.email,
         passwordHash: null,
         status: USER_STATUS.ACTIVE,
         createdAt: now,
@@ -118,7 +116,7 @@ async function loginWithGoogle(idToken) {
 
       userNode = await createAuthIdentityForUser(
         newUserNode.properties.id,
-        googleUser
+        providerUser
       );
     }
   }
@@ -135,6 +133,16 @@ async function loginWithGoogle(idToken) {
   };
 }
 
+async function loginWithGoogle(idToken) {
+  const googleUser = await verifyGoogleIdToken(idToken);
+  return loginWithProvider(googleUser);
+}
+
+async function loginWithMeta(accessToken) {
+  const metaUser = await verifyMetaAccessToken(accessToken);
+  return loginWithProvider(metaUser);
+}
+
 async function logoutPublicUser() {
   return true;
 }
@@ -143,5 +151,6 @@ module.exports = {
   registerPublicUser,
   loginPublicUser,
   loginWithGoogle,
+  loginWithMeta,
   logoutPublicUser,
 };

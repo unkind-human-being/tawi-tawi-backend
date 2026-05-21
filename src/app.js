@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
 const swaggerUi = require("swagger-ui-express");
 
 const env = require("./config/env");
@@ -10,6 +13,9 @@ const errorMiddleware = require("./middleware/error.middleware");
 
 const app = express();
 
+app.use(helmet());
+app.use(compression());
+
 app.use(
   cors({
     origin: env.CORS_ORIGIN === "*" ? "*" : env.CORS_ORIGIN.split(","),
@@ -17,8 +23,19 @@ app.use(
   })
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    success: false,
+    message: "Too many requests. Please try again later.",
+  },
+});
+
+app.use("/v1/auth", authLimiter);
 
 app.get("/", (req, res) => {
   res.json({
